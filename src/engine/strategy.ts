@@ -158,7 +158,7 @@ export function getBasicStrategyAction(
   dealerUpcard: number,
   canDoubleDown: boolean,
   canSplitHand: boolean,
-  currentLevel: Level
+  _currentLevel: Level
 ): StrategyDecision {
   const handValue = evaluateHand(playerCards);
   const handType = getHandType(playerCards);
@@ -173,48 +173,18 @@ export function getBasicStrategyAction(
 
   let strategyAction: StrategyAction = 'H';
 
-  // Level restrictions
-  if (currentLevel === 1) {
-    // Level 1: Only hard totals, no doubling
-    if (handType === 'hard') {
-      strategyAction = HARD_TOTALS[handValue.value]?.[dealerIndex] || 'H';
-      // Override any double to hit for level 1
-      if (strategyAction === 'D' || strategyAction === 'Ds') {
-        strategyAction = 'H';
-      }
-    } else {
-      strategyAction = 'H'; // Not at this level yet
-    }
-  } else if (currentLevel === 2) {
-    // Level 2: Hard totals with doubling
-    if (handType === 'hard') {
-      strategyAction = HARD_TOTALS[handValue.value]?.[dealerIndex] || 'H';
-    } else {
-      strategyAction = 'H'; // Not at this level yet
-    }
-  } else if (currentLevel === 3) {
-    // Level 3: Hard totals + Soft totals (with doubling)
-    if (handType === 'soft') {
-      strategyAction = SOFT_TOTALS[handValue.value]?.[dealerIndex] || 'H';
-    } else if (handType === 'hard') {
-      strategyAction = HARD_TOTALS[handValue.value]?.[dealerIndex] || 'H';
-    } else {
-      // Treat pairs as hard totals for level 3
-      strategyAction = HARD_TOTALS[handValue.value]?.[dealerIndex] || 'H';
-    }
-  } else if (currentLevel === 4) {
-    // Level 4: Complete strategy including pairs
-    if (handType === 'pair') {
-      const pairKey = `${playerCards[0].rank}-${playerCards[1].rank}`;
-      // Normalize face cards
-      const normalizedKey =
-        ['J', 'Q', 'K'].includes(playerCards[0].rank) ? '10-10' : pairKey;
-      strategyAction = PAIRS[normalizedKey]?.[dealerIndex] || 'H';
-    } else if (handType === 'soft') {
-      strategyAction = SOFT_TOTALS[handValue.value]?.[dealerIndex] || 'H';
-    } else {
-      strategyAction = HARD_TOTALS[handValue.value]?.[dealerIndex] || 'H';
-    }
+  // Always apply correct basic strategy regardless of level
+  // The rigged shoe system handles progressive introduction of different situations
+  if (handType === 'pair') {
+    const pairKey = `${playerCards[0].rank}-${playerCards[1].rank}`;
+    // Normalize face cards
+    const normalizedKey =
+      ['J', 'Q', 'K'].includes(playerCards[0].rank) ? '10-10' : pairKey;
+    strategyAction = PAIRS[normalizedKey]?.[dealerIndex] || 'H';
+  } else if (handType === 'soft') {
+    strategyAction = SOFT_TOTALS[handValue.value]?.[dealerIndex] || 'H';
+  } else {
+    strategyAction = HARD_TOTALS[handValue.value]?.[dealerIndex] || 'H';
   }
 
   const action = convertStrategyAction(strategyAction, canDoubleDown, canSplitHand);

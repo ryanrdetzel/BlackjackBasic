@@ -4,7 +4,7 @@ import ActionButtons from './ActionButtons';
 import BettingControls from './BettingControls';
 
 export default function GameArea() {
-  const { phase, dealerHand, playerHands } = useGameStore();
+  const { phase, dealerHand, playerHands, lastOutcome } = useGameStore();
 
   const showDealerSecondCard = phase === 'resolution' || phase === 'dealerTurn';
 
@@ -31,8 +31,48 @@ export default function GameArea() {
             Dealer Playing...
           </div>
         ) : phase === 'resolution' ? (
-          <div className="text-casino-gold text-xl font-bold">
-            Hand Complete
+          <div className="flex flex-col items-center space-y-2 p-6 bg-casino-felt rounded-lg border-2 border-casino-gold shadow-lg">
+            {lastOutcome.type === 'blackjack' ? (
+              <>
+                <div className="text-casino-gold text-4xl font-bold animate-pulse">
+                  BLACKJACK!
+                </div>
+                <div className="text-green-400 text-3xl font-bold">
+                  +${Math.abs(lastOutcome.amount).toFixed(2)}
+                </div>
+              </>
+            ) : lastOutcome.type === 'win' ? (
+              <>
+                <div className="text-green-400 text-4xl font-bold">
+                  YOU WIN!
+                </div>
+                <div className="text-green-400 text-3xl font-bold">
+                  +${Math.abs(lastOutcome.amount).toFixed(2)}
+                </div>
+              </>
+            ) : lastOutcome.type === 'lose' ? (
+              <>
+                <div className="text-red-500 text-4xl font-bold">
+                  YOU LOSE
+                </div>
+                <div className="text-red-500 text-3xl font-bold">
+                  -${Math.abs(lastOutcome.amount).toFixed(2)}
+                </div>
+              </>
+            ) : lastOutcome.type === 'push' ? (
+              <>
+                <div className="text-gray-300 text-4xl font-bold">
+                  PUSH
+                </div>
+                <div className="text-gray-300 text-2xl">
+                  Bet Returned
+                </div>
+              </>
+            ) : (
+              <div className="text-casino-gold text-xl font-bold">
+                Hand Complete
+              </div>
+            )}
           </div>
         ) : null}
       </div>

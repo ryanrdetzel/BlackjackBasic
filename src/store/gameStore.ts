@@ -40,6 +40,13 @@ interface GameStore extends GameState, ProgressState {
   feedbackMessage: string;
   setShowFeedback: (show: boolean) => void;
 
+  // Outcome tracking
+  lastOutcome: {
+    type: 'win' | 'lose' | 'push' | 'blackjack' | null;
+    amount: number;
+  };
+  lastBetAmount: number;
+
   // Utilities
   canPlayerDouble: () => boolean;
   canPlayerSplit: () => boolean;
@@ -152,6 +159,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   showFeedback: false,
   feedbackMessage: '',
 
+  // Outcome tracking
+  lastOutcome: {
+    type: null,
+    amount: 0,
+  },
+  lastBetAmount: 0,
+
   setShowFeedback: (show) => set({ showFeedback: show }),
 
   placeBet: (amount) => {
@@ -160,7 +174,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (amount > state.bankroll) return;
     if (amount < MIN_BET) return;
 
-    set({ currentBet: amount });
+    set({ currentBet: amount, lastBetAmount: amount });
   },
 
   startHand: () => {
@@ -420,8 +434,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   resolveHand: () => {
     const state = get();
     let winnings = 0;
+    let netAmount = 0;
+    let outcomeType: 'win' | 'lose' | 'push' | 'blackjack' | null = null;
 
     const dealerValue = evaluateHand(state.dealerHand.cards);
+    const totalBet = state.playerHands.reduce((sum, hand) => sum + hand.bet, 0);
 
     for (const playerHand of state.playerHands) {
       const playerValue = evaluateHand(playerHand.cards);
@@ -429,22 +446,30 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (playerHand.isBlackjack && !state.dealerHand.isBlackjack) {
         // Blackjack pays 3:2
         winnings += playerHand.bet * 2.5;
+        outcomeType = 'blackjack';
       } else if (playerHand.isBusted) {
         // Player loses (already deducted)
+        if (!outcomeType) outcomeType = 'lose';
         continue;
       } else if (dealerValue.isBusted) {
         // Dealer busts, player wins
         winnings += playerHand.bet * 2;
+        if (outcomeType !== 'blackjack') outcomeType = 'win';
       } else if (playerValue.value > dealerValue.value) {
         // Player wins
         winnings += playerHand.bet * 2;
+        if (outcomeType !== 'blackjack') outcomeType = 'win';
       } else if (playerValue.value === dealerValue.value) {
         // Push - return bet
         winnings += playerHand.bet;
+        if (!outcomeType || outcomeType === 'push') outcomeType = 'push';
+      } else {
+        // Player loses
+        if (!outcomeType || outcomeType === 'push') outcomeType = 'lose';
       }
-      // else player loses (already deducted)
     }
 
+    netAmount = winnings - totalBet;
     const newBankroll = state.bankroll + winnings;
 
     // Update stats
@@ -458,6 +483,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       phase: 'betting',
       currentBet: 0,
       currentHandIndex: 0,
+      lastOutcome: {
+        type: outcomeType,
+        amount: netAmount,
+      },
     });
   },
 

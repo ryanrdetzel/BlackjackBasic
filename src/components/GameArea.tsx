@@ -4,7 +4,7 @@ import ActionButtons from './ActionButtons';
 import BettingControls from './BettingControls';
 
 export default function GameArea() {
-  const { phase, dealerHand, playerHands, lastOutcome } = useGameStore();
+  const { phase, dealerHand, playerHands, lastOutcome, lastBetAmount } = useGameStore();
 
   const showDealerSecondCard = phase === 'resolution' || phase === 'dealerTurn';
 
@@ -40,6 +40,11 @@ export default function GameArea() {
                 <div className="text-green-400 text-3xl font-bold">
                   +${Math.abs(lastOutcome.amount).toFixed(2)}
                 </div>
+                {playerHands.some(h => h.isDoubled) && (
+                  <div className="text-gray-300 text-sm">
+                    (Doubled from ${lastBetAmount})
+                  </div>
+                )}
               </>
             ) : lastOutcome.type === 'win' ? (
               <>
@@ -49,6 +54,11 @@ export default function GameArea() {
                 <div className="text-green-400 text-3xl font-bold">
                   +${Math.abs(lastOutcome.amount).toFixed(2)}
                 </div>
+                {playerHands.some(h => h.isDoubled) && (
+                  <div className="text-gray-300 text-sm">
+                    (Doubled from ${lastBetAmount})
+                  </div>
+                )}
               </>
             ) : lastOutcome.type === 'lose' ? (
               <>
@@ -58,6 +68,11 @@ export default function GameArea() {
                 <div className="text-red-500 text-3xl font-bold">
                   -${Math.abs(lastOutcome.amount).toFixed(2)}
                 </div>
+                {playerHands.some(h => h.isDoubled) && (
+                  <div className="text-gray-300 text-sm">
+                    (Doubled from ${lastBetAmount})
+                  </div>
+                )}
               </>
             ) : lastOutcome.type === 'push' ? (
               <>
@@ -67,6 +82,11 @@ export default function GameArea() {
                 <div className="text-gray-300 text-2xl">
                   Bet Returned
                 </div>
+                {playerHands.some(h => h.isDoubled) && (
+                  <div className="text-gray-300 text-sm">
+                    (Doubled from ${lastBetAmount})
+                  </div>
+                )}
               </>
             ) : (
               <div className="text-casino-gold text-xl font-bold">

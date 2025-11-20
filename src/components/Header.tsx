@@ -31,6 +31,12 @@ export default function Header() {
                 <span className="text-red-400 font-semibold">{sessionStats.incorrect}</span>
                 <span className="text-gray-500">/</span>
                 <span className="text-white font-semibold">{sessionStats.total}</span>
+                <span className="text-gray-500">|</span>
+                <span className="text-casino-gold font-semibold">
+                  {sessionStats.total > 0
+                    ? ((sessionStats.correct / sessionStats.total) * 100).toFixed(1)
+                    : '0.0'}%
+                </span>
               </div>
             </div>
 

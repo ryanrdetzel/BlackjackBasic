@@ -84,9 +84,26 @@ export interface Stats {
   recentDecisions: DecisionRecord[]; // Rolling window (last 20)
 }
 
+export interface SessionData {
+  id: string;
+  startTime: number;
+  endTime: number;
+  correctMoves: number;
+  incorrectMoves: number;
+  totalMoves: number;
+  accuracy: number;
+}
+
 export interface ProgressState {
   currentLevel: Level;
   levels: LevelConfig[];
   stats: Stats;
   trainingMode: boolean;
+  currentSessionId: string;
+  sessionStats: {
+    correct: number;
+    incorrect: number;
+    total: number;
+  };
+  sessionHistory: SessionData[];
 }

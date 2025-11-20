@@ -164,6 +164,13 @@ export function getBasicStrategyAction(
   const handType = getHandType(playerCards);
   const dealerIndex = getDealerIndex(dealerUpcard);
 
+  // Universal rule: Always stand on 21, regardless of level or hand type
+  if (handValue.value === 21) {
+    const action: Action = 'Stand';
+    const reason = `You have 21 - the best possible hand. Always stand.`;
+    return { action, reason };
+  }
+
   let strategyAction: StrategyAction = 'H';
 
   // Level restrictions

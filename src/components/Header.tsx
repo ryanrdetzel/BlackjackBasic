@@ -2,7 +2,7 @@ import { useGameStore } from '../store/gameStore';
 import ProgressCircle from './ProgressCircle';
 
 export default function Header() {
-  const { levels, currentLevel, stats, trainingMode, toggleTrainingMode } = useGameStore();
+  const { levels, currentLevel, stats, trainingMode, toggleTrainingMode, sessionStats, startNewSession } = useGameStore();
 
   const getCurrentLevelProgress = () => {
     const levelDecisions = stats.recentDecisions.filter((d) => d.level === currentLevel);
@@ -15,26 +15,49 @@ export default function Header() {
   return (
     <header className="bg-casino-felt-dark border-b-4 border-casino-gold py-4 px-6">
       <div className="max-w-7xl mx-auto">
-        {/* Top row - Title and Training Mode Toggle */}
+        {/* Top row - Title, Session Stats, and Controls */}
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-3xl font-bold text-casino-gold font-casino">
             Blackjack Basic Strategy Trainer
           </h1>
 
-          <div className="flex items-center space-x-3">
-            <span className="text-white text-sm">Training Mode</span>
+          <div className="flex items-center space-x-6">
+            {/* Session Stats */}
+            <div className="flex items-center space-x-4 text-sm">
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-400">Session:</span>
+                <span className="text-green-400 font-semibold">{sessionStats.correct}</span>
+                <span className="text-gray-500">/</span>
+                <span className="text-red-400 font-semibold">{sessionStats.incorrect}</span>
+                <span className="text-gray-500">/</span>
+                <span className="text-white font-semibold">{sessionStats.total}</span>
+              </div>
+            </div>
+
+            {/* New Session Button */}
             <button
-              onClick={toggleTrainingMode}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                trainingMode ? 'bg-casino-gold' : 'bg-gray-600'
-              }`}
+              onClick={startNewSession}
+              className="px-3 py-1.5 bg-casino-gold text-casino-felt-dark font-semibold text-sm rounded hover:bg-yellow-500 transition-colors"
             >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  trainingMode ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
+              New Session
             </button>
+
+            {/* Training Mode Toggle */}
+            <div className="flex items-center space-x-3">
+              <span className="text-white text-sm">Training Mode</span>
+              <button
+                onClick={toggleTrainingMode}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  trainingMode ? 'bg-casino-gold' : 'bg-gray-600'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    trainingMode ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
           </div>
         </div>
 

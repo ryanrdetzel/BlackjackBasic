@@ -8,6 +8,7 @@ import {
   Level,
   LevelConfig,
   ProgressState,
+  SessionData,
   Stats,
 } from '../types';
 import { createShoe, createRiggedShoe, dealCard } from '../engine/deck';
@@ -32,6 +33,7 @@ interface GameStore extends GameState, ProgressState {
   // Progression actions
   toggleTrainingMode: () => void;
   recordDecision: (playerAction: Action) => void;
+  startNewSession: () => void;
 
   // Feedback
   showFeedback: boolean;
@@ -48,6 +50,11 @@ interface GameStore extends GameState, ProgressState {
 const INITIAL_BANKROLL = 1000;
 const MIN_BET = 10;
 const ROLLING_WINDOW_SIZE = 20;
+
+// Generate a unique session ID
+const generateSessionId = (): string => {
+  return `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+};
 
 // Initialize level configuration
 const initializeLevels = (): LevelConfig[] => [
@@ -131,6 +138,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
   levels: initializeLevels(),
   stats: initializeStats(),
   trainingMode: true,
+
+  // Session management
+  currentSessionId: generateSessionId(),
+  sessionStats: {
+    correct: 0,
+    incorrect: 0,
+    total: 0,
+  },
+  sessionHistory: [],
 
   // Feedback
   showFeedback: false,
@@ -489,12 +505,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const recentDecisions = [record, ...newStats.recentDecisions].slice(0, ROLLING_WINDOW_SIZE);
     newStats.recentDecisions = recentDecisions;
 
+    // Update session stats
+    const newSessionStats = { ...state.sessionStats };
+    newSessionStats.total += 1;
     if (isCorrect) {
       newStats.correctMoves += 1;
       newStats.byLevel[state.currentLevel].correct += 1;
+      newSessionStats.correct += 1;
     } else {
       newStats.incorrectMoves += 1;
       newStats.byLevel[state.currentLevel].incorrect += 1;
+      newSessionStats.incorrect += 1;
     }
 
     // Calculate accuracy
@@ -530,10 +551,53 @@ export const useGameStore = create<GameStore>((set, get) => ({
         feedbackMessage: correctDecision.reason,
         stats: newStats,
         levels: newLevels,
+        sessionStats: newSessionStats,
       });
     } else {
-      set({ stats: newStats, levels: newLevels });
+      set({ stats: newStats, levels: newLevels, sessionStats: newSessionStats });
     }
+  },
+
+  startNewSession: () => {
+    const state = get();
+
+    // Save current session to history if there are any moves
+    if (state.sessionStats.total > 0) {
+      const sessionData: SessionData = {
+        id: state.currentSessionId,
+        startTime: parseInt(state.currentSessionId.split('_')[1]), // Extract timestamp from ID
+        endTime: Date.now(),
+        correctMoves: state.sessionStats.correct,
+        incorrectMoves: state.sessionStats.incorrect,
+        totalMoves: state.sessionStats.total,
+        accuracy: state.sessionStats.total > 0
+          ? (state.sessionStats.correct / state.sessionStats.total) * 100
+          : 0,
+      };
+
+      const newHistory = [sessionData, ...state.sessionHistory];
+      set({ sessionHistory: newHistory });
+      localStorage.setItem('blackjack_session_history', JSON.stringify(newHistory));
+    }
+
+    // Reset recent decisions for current level only (to reset milestone progression)
+    // Keep decisions for completed levels
+    const newStats = { ...state.stats };
+    newStats.recentDecisions = newStats.recentDecisions.filter(
+      (d) => d.level !== state.currentLevel
+    );
+    localStorage.setItem('blackjack_stats', JSON.stringify(newStats));
+
+    // Start new session with fresh ID and reset session stats
+    set({
+      currentSessionId: generateSessionId(),
+      sessionStats: {
+        correct: 0,
+        incorrect: 0,
+        total: 0,
+      },
+      stats: newStats,
+    });
   },
 
   toggleTrainingMode: () => {

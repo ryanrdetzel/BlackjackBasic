@@ -113,7 +113,7 @@ const HandHistory = () => {
                       {formatCards(record.playerInitialCards)}
                     </td>
                     <td className="px-3 py-2 text-white font-mono">
-                      {record.dealerUpcard.rank}{record.dealerUpcard.suit}
+                      {record.dealerUpcard ? `${record.dealerUpcard.rank}${record.dealerUpcard.suit}` : '-'}
                     </td>
                     <td className="px-3 py-2 text-gray-300 text-xs">
                       {record.actions.join(', ') || 'None'}
@@ -172,7 +172,7 @@ const HandHistory = () => {
                   </span>
                   <span className="text-gray-400 text-xs">vs</span>
                   <span className="text-white font-mono">
-                    {record.dealerUpcard.rank}{record.dealerUpcard.suit}
+                    {record.dealerUpcard ? `${record.dealerUpcard.rank}${record.dealerUpcard.suit}` : '-'}
                   </span>
                   <span className="text-gray-400 text-xs">
                     {record.actions.join(', ') || 'None'}

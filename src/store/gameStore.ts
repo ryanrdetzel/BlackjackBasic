@@ -440,37 +440,57 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const dealerValue = evaluateHand(state.dealerHand.cards);
     const totalBet = state.playerHands.reduce((sum, hand) => sum + hand.bet, 0);
 
+    // Track individual hand results to determine overall outcome
+    let wins = 0;
+    let losses = 0;
+    let pushes = 0;
+    let blackjacks = 0;
+
     for (const playerHand of state.playerHands) {
       const playerValue = evaluateHand(playerHand.cards);
 
       if (playerHand.isBlackjack && !state.dealerHand.isBlackjack) {
         // Blackjack pays 3:2
         winnings += playerHand.bet * 2.5;
-        outcomeType = 'blackjack';
+        blackjacks++;
       } else if (playerHand.isBusted) {
         // Player loses (already deducted)
-        if (!outcomeType) outcomeType = 'lose';
+        losses++;
         continue;
       } else if (dealerValue.isBusted) {
         // Dealer busts, player wins
         winnings += playerHand.bet * 2;
-        if (outcomeType !== 'blackjack') outcomeType = 'win';
+        wins++;
       } else if (playerValue.value > dealerValue.value) {
         // Player wins
         winnings += playerHand.bet * 2;
-        if (outcomeType !== 'blackjack') outcomeType = 'win';
+        wins++;
       } else if (playerValue.value === dealerValue.value) {
         // Push - return bet
         winnings += playerHand.bet;
-        if (!outcomeType || outcomeType === 'push') outcomeType = 'push';
+        pushes++;
       } else {
         // Player loses
-        if (!outcomeType || outcomeType === 'push') outcomeType = 'lose';
+        losses++;
       }
     }
 
     netAmount = winnings - totalBet;
     const newBankroll = state.bankroll + winnings;
+
+    // Determine outcome type based on net result, not just individual hands
+    if (blackjacks > 0 && losses === 0 && wins === 0 && pushes === 0) {
+      outcomeType = 'blackjack';
+    } else if (netAmount > 0) {
+      // Net profit means overall win
+      outcomeType = blackjacks > 0 ? 'blackjack' : 'win';
+    } else if (netAmount < 0) {
+      // Net loss means overall lose
+      outcomeType = 'lose';
+    } else {
+      // Net zero means push (break even)
+      outcomeType = 'push';
+    }
 
     // Update stats
     const newStats = { ...state.stats };

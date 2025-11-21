@@ -1,10 +1,12 @@
 import { create } from 'zustand';
 import {
   Action,
+  Card,
   DecisionRecord,
   GamePhase,
   GameState,
   Hand,
+  HandHistoryRecord,
   Level,
   LevelConfig,
   ProgressState,
@@ -46,6 +48,13 @@ interface GameStore extends GameState, ProgressState {
     amount: number;
   };
   lastBetAmount: number;
+
+  // Hand history
+  handHistory: HandHistoryRecord[];
+  currentHandActions: Action[];
+  currentHandInitialCards: Card[];
+  clearHandHistory: () => void;
+  exportHandHistoryCSV: () => string;
 
   // Utilities
   canPlayerDouble: () => boolean;
@@ -113,6 +122,15 @@ const initializeStats = (): Stats => {
   };
 };
 
+// Initialize hand history
+const initializeHandHistory = (): HandHistoryRecord[] => {
+  const stored = localStorage.getItem('blackjack_hand_history');
+  if (stored) {
+    return JSON.parse(stored);
+  }
+  return [];
+};
+
 // Calculate accuracy from recent decisions for current level
 const calculateRecentAccuracy = (recentDecisions: DecisionRecord[], level: Level): number => {
   const levelDecisions = recentDecisions.filter((d) => d.level === level);
@@ -165,6 +183,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     amount: 0,
   },
   lastBetAmount: 0,
+
+  // Hand history
+  handHistory: initializeHandHistory(),
+  currentHandActions: [],
+  currentHandInitialCards: [],
 
   setShowFeedback: (show) => set({ showFeedback: show }),
 
@@ -231,6 +254,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         playerHands: [playerHand],
         currentHandIndex: 0,
         bankroll: newBankroll,
+        currentHandInitialCards: [playerCard1, playerCard2],
+        currentHandActions: [],
       });
       setTimeout(() => get().resolveHand(), 1000);
       return;
@@ -243,6 +268,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       playerHands: [playerHand],
       currentHandIndex: 0,
       bankroll: newBankroll,
+      currentHandInitialCards: [playerCard1, playerCard2],
+      currentHandActions: [],
     });
   },
 
@@ -255,6 +282,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // Record the decision
     get().recordDecision('Hit');
+
+    // Track action
+    set({ currentHandActions: [...state.currentHandActions, 'Hit'] });
 
     const { card, remainingShoe } = dealCard(state.shoe);
     const updatedHands = [...state.playerHands];
@@ -288,6 +318,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Record the decision
     get().recordDecision('Stand');
 
+    // Track action
+    set({ currentHandActions: [...state.currentHandActions, 'Stand'] });
+
     const updatedHands = [...state.playerHands];
     updatedHands[state.currentHandIndex] = {
       ...currentHand,
@@ -309,6 +342,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // Record the decision
     get().recordDecision('Double');
+
+    // Track action
+    set({ currentHandActions: [...state.currentHandActions, 'Double'] });
 
     const { card, remainingShoe } = dealCard(state.shoe);
     const updatedHands = [...state.playerHands];
@@ -344,6 +380,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // Record the decision
     get().recordDecision('Split');
+
+    // Track action
+    set({ currentHandActions: [...state.currentHandActions, 'Split'] });
 
     const [card1, card2] = currentHand.cards;
 
@@ -477,6 +516,42 @@ export const useGameStore = create<GameStore>((set, get) => ({
     newStats.handsPlayed += 1;
     localStorage.setItem('blackjack_stats', JSON.stringify(newStats));
 
+    // Create hand history record
+    const primaryHand = state.playerHands[0]; // Use first hand for history (simplified for splits)
+    const playerFinalValue = evaluateHand(primaryHand.cards);
+    const wasDoubled = state.playerHands.some(h => h.isDoubled);
+    const wasSplit = state.playerHands.length > 1;
+
+    // Determine if all decisions were correct
+    const handDecisions = state.stats.recentDecisions.filter(
+      d => d.timestamp > (Date.now() - 10000) // Last 10 seconds
+    );
+    const strategyCorrect = handDecisions.length === 0 || handDecisions.every(d => d.isCorrect);
+
+    const handRecord: HandHistoryRecord = {
+      handNumber: state.handHistory.length + 1,
+      timestamp: Date.now(),
+      sessionId: state.currentSessionId,
+      playerInitialCards: state.currentHandInitialCards,
+      dealerUpcard: state.dealerHand.cards[0],
+      actions: state.currentHandActions,
+      playerFinalCards: primaryHand.cards,
+      playerFinalValue: playerFinalValue.value,
+      playerIsSoft: playerFinalValue.isSoft,
+      dealerFinalCards: state.dealerHand.cards,
+      dealerFinalValue: dealerValue.value,
+      betAmount: state.lastBetAmount,
+      wasDoubled,
+      wasSplit,
+      outcome: outcomeType || 'lose',
+      netAmount,
+      runningBankroll: newBankroll,
+      strategyCorrect,
+    };
+
+    const newHandHistory = [handRecord, ...state.handHistory];
+    localStorage.setItem('blackjack_hand_history', JSON.stringify(newHandHistory));
+
     set({
       bankroll: newBankroll,
       stats: newStats,
@@ -487,6 +562,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
         type: outcomeType,
         amount: netAmount,
       },
+      handHistory: newHandHistory,
+      currentHandActions: [],
+      currentHandInitialCards: [],
     });
   },
 
@@ -643,6 +721,66 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   resetBankroll: () => {
     set({ bankroll: INITIAL_BANKROLL, phase: 'betting', currentBet: 0 });
+  },
+
+  clearHandHistory: () => {
+    set({ handHistory: [] });
+    localStorage.removeItem('blackjack_hand_history');
+  },
+
+  exportHandHistoryCSV: () => {
+    const state = get();
+    if (state.handHistory.length === 0) {
+      return 'No hand history to export';
+    }
+
+    // Helper function to format cards
+    const formatCards = (cards: Card[]) => {
+      return cards.map(c => `${c.rank}${c.suit}`).join(' ');
+    };
+
+    // CSV Header
+    const headers = [
+      'Hand #',
+      'Timestamp',
+      'Session ID',
+      'Player Initial',
+      'Dealer Upcard',
+      'Actions',
+      'Player Final',
+      'Player Value',
+      'Dealer Final',
+      'Dealer Value',
+      'Bet',
+      'Outcome',
+      'Net',
+      'Running Bankroll',
+      'Strategy Correct?',
+    ];
+
+    // CSV Rows
+    const rows = state.handHistory.map(record => {
+      const date = new Date(record.timestamp).toLocaleString();
+      return [
+        record.handNumber,
+        date,
+        record.sessionId,
+        `"${formatCards(record.playerInitialCards)}"`,
+        `${record.dealerUpcard.rank}${record.dealerUpcard.suit}`,
+        `"${record.actions.join(', ')}"`,
+        `"${formatCards(record.playerFinalCards)}"`,
+        `${record.playerFinalValue}${record.playerIsSoft ? ' (soft)' : ''}`,
+        `"${formatCards(record.dealerFinalCards)}"`,
+        record.dealerFinalValue,
+        `$${record.betAmount}`,
+        record.outcome.charAt(0).toUpperCase() + record.outcome.slice(1),
+        record.netAmount >= 0 ? `+$${record.netAmount}` : `-$${Math.abs(record.netAmount)}`,
+        `$${record.runningBankroll}`,
+        record.strategyCorrect ? 'Yes' : 'No',
+      ].join(',');
+    });
+
+    return [headers.join(','), ...rows].join('\n');
   },
 
   canPlayerDouble: () => {

@@ -14,6 +14,12 @@ const HandHistory = () => {
     return cards.map(c => `${c.rank}${c.suit}`).join(' ');
   };
 
+  // Helper function to format dealer upcard
+  const formatDealerUpcard = (card: Card | undefined) => {
+    if (!card) return '-';
+    return `${card.rank}${card.suit}`;
+  };
+
   const handleDownloadCSV = () => {
     const csv = exportHandHistoryCSV();
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -113,7 +119,7 @@ const HandHistory = () => {
                       {formatCards(record.playerInitialCards)}
                     </td>
                     <td className="px-3 py-2 text-white font-mono">
-                      {record.dealerUpcard.rank}{record.dealerUpcard.suit}
+                      {formatDealerUpcard(record.dealerUpcard)}
                     </td>
                     <td className="px-3 py-2 text-gray-300 text-xs">
                       {record.actions.join(', ') || 'None'}
@@ -172,7 +178,7 @@ const HandHistory = () => {
                   </span>
                   <span className="text-gray-400 text-xs">vs</span>
                   <span className="text-white font-mono">
-                    {record.dealerUpcard.rank}{record.dealerUpcard.suit}
+                    {formatDealerUpcard(record.dealerUpcard)}
                   </span>
                   <span className="text-gray-400 text-xs">
                     {record.actions.join(', ') || 'None'}

@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { Card } from '../types';
 
 const HandHistory = () => {
-  const handHistory = useGameStore((state) => state.handHistory);
+  const handHistory = useGameStore((state) => state.handHistory) || [];
   const exportHandHistoryCSV = useGameStore((state) => state.exportHandHistoryCSV);
   const clearHandHistory = useGameStore((state) => state.clearHandHistory);
   const [isExpanded, setIsExpanded] = useState(false);

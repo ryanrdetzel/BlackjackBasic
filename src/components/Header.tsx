@@ -2,7 +2,7 @@ import { useGameStore } from '../store/gameStore';
 import ProgressCircle from './ProgressCircle';
 
 export default function Header() {
-  const { levels, currentLevel, stats, trainingMode, toggleTrainingMode, sessionStats, startNewSession } = useGameStore();
+  const { levels = [], currentLevel, stats, trainingMode, toggleTrainingMode, sessionStats, startNewSession } = useGameStore();
 
   const getCurrentLevelProgress = () => {
     const levelDecisions = stats.recentDecisions.filter((d) => d.level === currentLevel);

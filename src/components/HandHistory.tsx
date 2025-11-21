@@ -116,7 +116,7 @@ const HandHistory = () => {
                       {record.dealerUpcard ? `${record.dealerUpcard.rank}${record.dealerUpcard.suit}` : '-'}
                     </td>
                     <td className="px-3 py-2 text-gray-300 text-xs">
-                      {record.actions.join(', ') || 'None'}
+                      {record.actions && record.actions.length > 0 ? record.actions.join(', ') : 'None'}
                     </td>
                     <td className="px-3 py-2 text-white font-mono text-xs">
                       {formatCards(record.playerFinalCards)}
@@ -175,7 +175,7 @@ const HandHistory = () => {
                     {record.dealerUpcard ? `${record.dealerUpcard.rank}${record.dealerUpcard.suit}` : '-'}
                   </span>
                   <span className="text-gray-400 text-xs">
-                    {record.actions.join(', ') || 'None'}
+                    {record.actions && record.actions.length > 0 ? record.actions.join(', ') : 'None'}
                   </span>
                 </div>
                 <div className="flex items-center gap-4">

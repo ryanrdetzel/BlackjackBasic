@@ -4,7 +4,13 @@ import ActionButtons from './ActionButtons';
 import BettingControls from './BettingControls';
 
 export default function GameArea() {
-  const { phase, dealerHand, playerHands, lastOutcome, lastBetAmount } = useGameStore();
+  const {
+    phase,
+    dealerHand = { cards: [], bet: 0, isActive: false, isStanding: false, isDoubled: false, isBusted: false, isBlackjack: false },
+    playerHands = [],
+    lastOutcome,
+    lastBetAmount
+  } = useGameStore();
 
   const showDealerSecondCard = phase === 'resolution' || phase === 'dealerTurn';
 

@@ -5,6 +5,7 @@ export default function Header() {
   const { levels = [], currentLevel, stats, trainingMode, toggleTrainingMode, sessionStats, startNewSession } = useGameStore();
 
   const getCurrentLevelProgress = () => {
+    if (!stats?.recentDecisions) return 0;
     const levelDecisions = stats.recentDecisions.filter((d) => d.level === currentLevel);
     if (levelDecisions.length === 0) return 0;
 

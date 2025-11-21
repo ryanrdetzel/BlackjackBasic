@@ -10,7 +10,8 @@ interface HandProps {
 }
 
 export default function Hand({ hand, isDealer = false, hideSecondCard = false, label }: HandProps) {
-  const handValue = evaluateHand(hand.cards);
+  const cards = hand.cards || [];
+  const handValue = evaluateHand(cards);
 
   // For dealer, don't show value if second card is hidden
   const showValue = !(isDealer && hideSecondCard);
@@ -25,7 +26,7 @@ export default function Hand({ hand, isDealer = false, hideSecondCard = false, l
 
       {/* Cards */}
       <div className="flex space-x-2">
-        {hand.cards.map((card, index) => (
+        {cards.map((card, index) => (
           <div
             key={index}
             className="transform transition-transform hover:scale-105"

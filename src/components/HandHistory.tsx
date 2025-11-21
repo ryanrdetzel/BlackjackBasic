@@ -9,7 +9,8 @@ const HandHistory = () => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Helper function to format cards
-  const formatCards = (cards: Card[]) => {
+  const formatCards = (cards: Card[] | undefined) => {
+    if (!cards || cards.length === 0) return '-';
     return cards.map(c => `${c.rank}${c.suit}`).join(' ');
   };
 

@@ -94,6 +94,27 @@ export interface SessionData {
   accuracy: number;
 }
 
+export interface HandHistoryRecord {
+  handNumber: number;
+  timestamp: number;
+  sessionId: string;
+  playerInitialCards: Card[];
+  dealerUpcard: Card;
+  actions: Action[];
+  playerFinalCards: Card[];
+  playerFinalValue: number;
+  playerIsSoft: boolean;
+  dealerFinalCards: Card[];
+  dealerFinalValue: number;
+  betAmount: number;
+  wasDoubled: boolean;
+  wasSplit: boolean;
+  outcome: 'win' | 'lose' | 'push' | 'blackjack';
+  netAmount: number;
+  runningBankroll: number;
+  strategyCorrect: boolean;
+}
+
 export interface ProgressState {
   currentLevel: Level;
   levels: LevelConfig[];

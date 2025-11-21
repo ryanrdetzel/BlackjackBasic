@@ -38,7 +38,7 @@ export default function GameArea() {
                   BLACKJACK!
                 </div>
                 <div className="text-green-400 text-3xl font-bold">
-                  +${Math.abs(lastOutcome.amount).toFixed(2)}
+                  +${lastOutcome.amount.toFixed(2)}
                 </div>
                 {playerHands.some(h => h.isDoubled) && (
                   <div className="text-gray-300 text-sm">
@@ -52,7 +52,7 @@ export default function GameArea() {
                   YOU WIN!
                 </div>
                 <div className="text-green-400 text-3xl font-bold">
-                  +${Math.abs(lastOutcome.amount).toFixed(2)}
+                  +${lastOutcome.amount.toFixed(2)}
                 </div>
                 {playerHands.some(h => h.isDoubled) && (
                   <div className="text-gray-300 text-sm">
@@ -66,7 +66,7 @@ export default function GameArea() {
                   YOU LOSE
                 </div>
                 <div className="text-red-500 text-3xl font-bold">
-                  -${Math.abs(lastOutcome.amount).toFixed(2)}
+                  ${lastOutcome.amount.toFixed(2)}
                 </div>
                 {playerHands.some(h => h.isDoubled) && (
                   <div className="text-gray-300 text-sm">

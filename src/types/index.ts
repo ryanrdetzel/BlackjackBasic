@@ -98,13 +98,13 @@ export interface HandHistoryRecord {
   handNumber: number;
   timestamp: number;
   sessionId: string;
-  playerInitialCards: Card[];
-  dealerUpcard: Card;
-  actions: Action[];
-  playerFinalCards: Card[];
+  playerInitialCards?: Card[];
+  dealerUpcard?: Card;
+  actions?: Action[];
+  playerFinalCards?: Card[];
   playerFinalValue: number;
   playerIsSoft: boolean;
-  dealerFinalCards: Card[];
+  dealerFinalCards?: Card[];
   dealerFinalValue: number;
   betAmount: number;
   wasDoubled: boolean;
